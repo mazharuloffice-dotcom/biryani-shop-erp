@@ -55,7 +55,7 @@ disk_data = load_permanent_database()
 # User Accounts Configurations
 if 'users_db' not in st.session_state:
     st.session_state.users_db = {
-        "superadmin": {"password": "123", "role": "Super Admin"},
+        "superadmin": {"password": "MIB!23", "role": "Super Admin"},
         "admin": {"password": "456", "role": "Admin"},
         "partner": {"password": "789", "role": "Partner (View Only)"}
     }
