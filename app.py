@@ -31,7 +31,6 @@ if 'inventory_items' not in st.session_state:
 
 # Fresh Master Transaction Data Tables (Starting with 0 Records)
 if 'partners_db' not in st.session_state:
-    # Auto-initialize registered partners with 0.0 investment
     st.session_state.partners_db = pd.DataFrame([{"Partner Name": p, "Investment Amount": 0.0} for p in st.session_state.partner_list])
 
 if 'fixed_expenses' not in st.session_state:
@@ -59,7 +58,6 @@ if 'logged_in_user' not in st.session_state:
 if 'user_role' not in st.session_state:
     st.session_state.user_role = None
 
-# Helper function to extract Month-Year string from datetime object
 def get_month_year_str(dt_val):
     return dt_val.strftime("%B %Y")
 
@@ -121,7 +119,6 @@ choice = st.sidebar.radio("Navigate to module:", menu_options)
 if choice == "📊 Financial Dashboard":
     st.title("📊 Month-Wise Enterprise Financial Analytics")
     
-    # Generate continuous list of months for selection based on sales records or current time
     available_months = ["All Time"]
     if len(st.session_state.sales_records) > 0:
         unique_months = st.session_state.sales_records["Month-Year"].unique().tolist()
@@ -131,7 +128,6 @@ if choice == "📊 Financial Dashboard":
         
     selected_month = st.selectbox("📅 Select Target Month for Statement Filtering", available_months)
     
-    # Contextual Filtering Engine
     df_sales = st.session_state.sales_records.copy()
     df_fixed = st.session_state.fixed_expenses.copy()
     df_variable = st.session_state.variable_bazar.copy()
@@ -140,7 +136,6 @@ if choice == "📊 Financial Dashboard":
     
     if selected_month != "All Time":
         df_sales = df_sales[df_sales["Month-Year"] == selected_month]
-        # For non-sales tables, filter by parsing their Date strings
         def filter_by_month(df):
             if len(df) == 0: return df
             df["Temp-Month"] = pd.to_datetime(df["Date"]).dt.strftime("%B %Y")
@@ -152,7 +147,6 @@ if choice == "📊 Financial Dashboard":
         df_monthly = filter_by_month(df_monthly)
         df_salary = filter_by_month(df_salary)
 
-    # Re-calculate dynamic relational variables
     m_sales = df_sales["Net Total"].sum() if len(df_sales) > 0 else 0.0
     m_fixed = df_fixed["Amount"].sum() if len(df_fixed) > 0 else 0.0
     m_variable = df_variable["Total Cost (BDT)"].sum() if len(df_variable) > 0 else 0.0
@@ -160,19 +154,17 @@ if choice == "📊 Financial Dashboard":
     m_salary = df_salary["Amount Paid (BDT)"].sum() if len(df_salary) > 0 else 0.0
     
     m_outflow = m_fixed + m_variable + m_monthly + m_salary
-    m_net_p&l = m_sales - m_outflow
+    m_net_profit_loss = m_sales - m_outflow
     total_capital_base = st.session_state.partners_db["Investment Amount"].sum()
 
-    # KPI Layout
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     kpi1.metric(f"Sales Revenue ({selected_month})", f"{m_sales:,.2f} BDT")
     kpi2.metric(f"Total Expenses Outflow", f"{m_outflow:,.2f} BDT")
-    kpi3.metric(f"Net Profit / Loss", f"{m_net_p&l:,.2f} BDT", delta=f"{m_net_p&l:,.2f} BDT")
+    kpi3.metric(f"Net Profit / Loss", f"{m_net_profit_loss:,.2f} BDT", delta=f"{m_net_profit_loss:,.2f} BDT")
     kpi4.metric("Total Equity Capital", f"{total_capital_base:,.2f} BDT")
     
     st.markdown("---")
     
-    # Analytical Visualizations
     c_col1, c_col2 = st.columns(2)
     with c_col1:
         st.markdown("### 📈 Monthly Cash Inflow vs Outflow Overview")
@@ -196,7 +188,6 @@ if choice == "📊 Financial Dashboard":
         else:
             st.info("No expenditures logged for the selected calendar boundary.")
 
-    # Profit & Loss Statement
     st.markdown("---")
     st.markdown(f"### 📅 Relational Profit & Loss (P&L) Statement Ledger — {selected_month}")
     pl_data = {
@@ -208,17 +199,16 @@ if choice == "📊 Financial Dashboard":
             "Total Human Resource Payroll Distributions (-)",
             "Net Resultant Operational Balance (P&L profit base)"
         ],
-        "Calculated Statement Values (BDT)": [f"{m_sales:,.2f}", f"{m_fixed:,.2f}", f"{m_variable:,.2f}", f"{m_monthly:,.2f}", f"{m_salary:,.2f}", f"{m_net_p&l:,.2f}"]
+        "Calculated Statement Values (BDT)": [f"{m_sales:,.2f}", f"{m_fixed:,.2f}", f"{m_variable:,.2f}", f"{m_monthly:,.2f}", f"{m_salary:,.2f}", f"{m_net_profit_loss:,.2f}"]
     }
     st.table(pd.DataFrame(pl_data))
 
-    # Month-Wise Profit Sharing Engine & Partner Payout Reports
     st.markdown("---")
     st.markdown(f"### 🤝 Automated Month-Wise Profit Sharing Engine ({selected_month})")
     df_payout = st.session_state.partners_db.copy()
     if total_capital_base > 0:
         df_payout["Capital Ownership Share (%)"] = (df_payout["Investment Amount"] / total_capital_base) * 100
-        df_payout["Calculated Month P&L Share (BDT)"] = (df_payout["Capital Ownership Share (%)"] / 100) * m_net_p&l
+        df_payout["Calculated Month P&L Share (BDT)"] = (df_payout["Capital Ownership Share (%)"] / 100) * m_net_profit_loss
         
         df_p_disp = df_payout.copy()
         df_p_disp["Investment Amount"] = df_p_disp["Investment Amount"].map("{:,.2f} BDT".format)
@@ -229,11 +219,10 @@ if choice == "📊 Financial Dashboard":
         st.info("Equity database amounts stand at 0. Enter partner capital to run distribution matrix scripts.")
 
 # ----------------------------------------------------------------------------------
-# MODULE 2: ADVANCED REPORT MANAGER (View, Print, PDF & Excel Exporters)
+# MODULE 2: ADVANCED REPORT MANAGER
 # ----------------------------------------------------------------------------------
 elif choice == "📈 Advanced Report Manager":
     st.title("📈 Strategic Cross-Module Multi-Report Manager Engine")
-    st.write("Isolate transactional matrix segments, render printer views, or compile data frames.")
     
     rep_tab1, rep_tab2, rep_tab3 = st.tabs(["Sales Journal Ledger", "Variable Material Sourcing", "Staff Payroll Distributions"])
     
@@ -252,8 +241,6 @@ elif choice == "📈 Advanced Report Manager":
             
             st.metric("Aggregated Net Filtered Sales Volume", f"{f_sales['Net Total'].sum():,.2f} BDT")
             st.dataframe(f_sales, use_container_width=True)
-            
-            # Excel export script hook
             st.download_button(label="📥 Export Sales Data as Excel (CSV)", data=f_sales.to_csv(index=False), file_name=f"Sales_Report_{s_start}_to_{s_end}.csv", mime="text/csv")
         else:
             st.info("Sales transaction database table stands empty.")
@@ -297,11 +284,10 @@ elif choice == "📈 Advanced Report Manager":
             st.info("Salary ledger currently registers 0 entries.")
 
 # ----------------------------------------------------------------------------------
-# MODULE 3: DIGITAL INVOICE GENERATOR (Receipt Generation Tool)
+# MODULE 3: DIGITAL INVOICE GENERATOR
 # ----------------------------------------------------------------------------------
 elif choice == "🧾 Digital Invoice Generator":
     st.title("🧾 Interactive Point of Sale (POS) Invoice Generator")
-    st.write("Generate structural retail receipts dynamically for client printing or PDF backup.")
     
     col_inv1, col_inv2 = st.columns([1, 1])
     with col_inv1:
@@ -316,7 +302,6 @@ elif choice == "🧾 Digital Invoice Generator":
         inv_net = inv_gross - inv_disc
         
     with col_inv2:
-        st.markdown("#### 📄 Dynamic Voucher Rendering Output")
         st.markdown("""
         <style>
         .invoice-box { max-width: 400px; padding: 20px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, .15); font-size: 14px; line-height: 22px; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; color: #555; background-color: #fff; }
@@ -356,7 +341,7 @@ elif choice == "🧾 Digital Invoice Generator":
         </div>
         """
         st.markdown(invoice_html, unsafe_allow_html=True)
-        st.caption("💡 Tip: Use your browser print shortcut (Ctrl+P or Cmd+P) to save this block as a crisp PDF file.")
+        st.caption("💡 Tip: Use your browser print shortcut (Ctrl+P or Cmd+P) to save this block as a PDF file.")
 
 # ----------------------------------------------------------------------------------
 # MODULE 4: PARTNER CAPITAL ENGINE
@@ -380,7 +365,6 @@ elif choice == "🤝 Partner Capital Engine":
                     if p_select in df_m["Partner Name"].values:
                         df_m.loc[df_m["Partner Name"] == p_select, "Investment Amount"] += p_inject
                         st.success(f"Equity balance successfully transformed for partner: {p_select}")
-                        st.shape = None # placeholder
                         st.rerun()
 
     with p_tab2:
@@ -447,7 +431,6 @@ elif choice == "🛒 Variable Bazar Cost":
     if not is_partner:
         st.markdown("### ➕ Input Raw Variable Procurement Sourcing Event")
         with st.form("bazar_log_form", clear_on_submit=True):
-            # Strategic Inventory Item Selection Context mapped here
             mat_select = st.selectbox("Choose Targeted Inventory Raw Material Asset Descriptor Node", st.session_state.inventory_items + ["Other Unlisted Sourcing Items"])
             bc1, bc2 = st.columns(2)
             with bc1:
@@ -520,7 +503,6 @@ elif choice == "📦 Inventory & Restock":
     df_inv_ledger["Pipeline Assessment Status"] = df_inv_ledger.apply(lambda r: "🚨 LOW STOCK WARNING CRITICAL LEVEL" if r["Current Stock"] <= r["Alert Level"] else "✅ Adequate Sourcing Level Optimal", axis=1)
     st.dataframe(df_inv_ledger, use_container_width=True)
     
-    # Alert Trigger Mechanism
     low_stocks = df_inv_ledger[df_inv_ledger["Current Stock"] <= df_inv_ledger["Alert Level"]]
     if len(low_stocks) > 0:
         for _, row in low_stocks.iterrows():
@@ -535,7 +517,7 @@ elif choice == "📦 Inventory & Restock":
             if st.form_submit_button("Recompute Target Pipeline Volumetric Balances"):
                 st.session_state.inventory_db.loc[st.session_state.inventory_db["Material Name"] == raw_sel, "Current Stock"] += stock_delta
                 st.success(f"Supply capacity parameter expanded for material item node: '{raw_sel}'")
-                st.shape = None # placeholder
+                st.shape = None
                 st.rerun()
 
 # ----------------------------------------------------------------------------------
@@ -547,7 +529,6 @@ elif choice == "⚙️ Dropdown Control Panel":
     
     tab_m1, tab_m2, tab_m3, tab_m4, tab_m5 = st.tabs(["Food Menu Items Array", "Partners Validation Matrix", "Asset Accounting Categories", "Monthly Expense Codes", "Raw Inventory Item Elements"])
     
-    # 1. Food Menu Mutator
     with tab_m1:
         st.write("Current Roster configuration mapping:", st.session_state.menu_items)
         col_m1, col_m2 = st.columns(2)
@@ -565,14 +546,11 @@ elif choice == "⚙️ Dropdown Control Panel":
                 if mutated_f and mutated_f != target_f:
                     idx = st.session_state.menu_items.index(target_f)
                     st.session_state.menu_items[idx] = mutated_f
-                    # Cascading change update across ongoing temporary state table items
                     if len(st.session_state.sales_records) > 0:
                         st.session_state.sales_records.loc[st.session_state.sales_records["Item Name"] == target_f, "Item Name"] = mutated_f
                     st.success("Cascade item renaming script complete.")
-                    st.shape = None
                     st.rerun()
 
-    # 2. Partner List Mutator
     with tab_m2:
         st.write("Current Active Account Identifiers List Base:", st.session_state.partner_list)
         col_p1, col_p2 = st.columns(2)
@@ -581,7 +559,6 @@ elif choice == "⚙️ Dropdown Control Panel":
             if st.button("Publish Partner Roster Allocation"):
                 if new_p_node and new_p_node not in st.session_state.partner_list:
                     st.session_state.partner_list.append(new_p_node)
-                    # Add row to active matrix database
                     new_r = pd.DataFrame([{"Partner Name": new_p_node, "Investment Amount": 0.0}])
                     st.session_state.partners_db = pd.concat([st.session_state.partners_db, new_r], ignore_index=True)
                     st.success("New structural entity partner tracking registered.")
@@ -597,7 +574,6 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.success("Identity profile configuration renaming done.")
                     st.rerun()
 
-    # 3. Asset Categories Mutator
     with tab_m3:
         st.write("Current Operational Headings:", st.session_state.asset_categories)
         col_a1, col_a2 = st.columns(2)
@@ -620,7 +596,6 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.success("Asset ledger categories refactored successfully.")
                     st.rerun()
 
-    # 4. Monthly Expense Heads Mutator
     with tab_m4:
         st.write("Current Operating Expense Head Codes:", st.session_state.expense_categories)
         col_e1, col_e2 = st.columns(2)
@@ -641,10 +616,8 @@ elif choice == "⚙️ Dropdown Control Panel":
                     if len(st.session_state.monthly_expenses_db) > 0:
                         st.session_state.monthly_expenses_db.loc[st.session_state.monthly_expenses_db["Category"] == target_e, "Category"] = mutated_e
                     st.success("Operational bill lookup arrays adjusted.")
-                    st.shape = None
                     st.rerun()
 
-    # 5. Raw Material Item Elements Mutator
     with tab_m5:
         st.write("Current Inventory Row Elements Matrix List Mapping:", st.session_state.inventory_items)
         col_i1, col_i2 = st.columns(2)
@@ -653,7 +626,6 @@ elif choice == "⚙️ Dropdown Control Panel":
             if st.button("Append Sourcing Material Descriptor Item"):
                 if new_i_node and new_i_node not in st.session_state.inventory_items:
                     st.session_state.inventory_items.append(new_i_node)
-                    # Sync dynamic instantiation insertion row on actual data database log list
                     new_inv_r = pd.DataFrame([{"Material Name": new_i_node, "Current Stock": 0.0, "Unit": "Kg/Ltr", "Alert Level": 10.0}])
                     st.session_state.inventory_db = pd.concat([st.session_state.inventory_db, new_inv_r], ignore_index=True)
                     st.success("Asset ledger element linked to pipeline parameters.")
