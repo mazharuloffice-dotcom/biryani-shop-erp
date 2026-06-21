@@ -3,13 +3,56 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, date
+import json
+import os
 
 # Page Configuration
 st.set_page_config(page_title="Swapnajatra Biryani Bari ERP", page_icon="🍲", layout="wide")
 
 # ----------------------------------------------------------------------------------
-# 1. CLEAN & FRESH DATABASE INITIALIZATION (All Amounts Start from 0)
+# DATABASE HARD-DRIVE STORAGE SYSTEM (JSON Persistent Layer)
 # ----------------------------------------------------------------------------------
+DB_FILE = "erp_database.json"
+
+def load_permanent_database():
+    """Reads data from JSON file into session state so reload won't wipe it."""
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except:
+                return {}
+    return {}
+
+def save_permanent_database():
+    """Writes all current state tables into JSON file instantly on any entry."""
+    sync_data = {
+        "menu_items": st.session_state.menu_items,
+        "partner_list": st.session_state.partner_list,
+        "asset_categories": st.session_state.asset_categories,
+        "expense_categories": st.session_state.expense_categories,
+        "inventory_items": st.session_state.inventory_items,
+        
+        # Convert DataFrames to dict/json format safely
+        "partners_db": st.session_state.partners_db.to_dict(orient="records"),
+        "fixed_expenses": st.session_state.fixed_expenses.to_dict(orient="records"),
+        "monthly_expenses_db": st.session_state.monthly_expenses_db.to_dict(orient="records"),
+        "variable_bazar": st.session_state.variable_bazar.to_dict(orient="records"),
+        "sales_records": st.session_state.sales_records.to_dict(orient="records"),
+        "salary_db": st.session_state.salary_db.to_dict(orient="records"),
+        "inventory_db": st.session_state.inventory_db.to_dict(orient="records"),
+        
+        # Save login active session status
+        "logged_in_user": st.session_state.logged_in_user,
+        "user_role": st.session_state.user_role
+    }
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(sync_data, f, indent=4, ensure_ascii=False)
+
+# Initialize Hard-Drive Read Scheme
+disk_data = load_permanent_database()
+
+# User Accounts Configurations
 if 'users_db' not in st.session_state:
     st.session_state.users_db = {
         "superadmin": {"password": "123", "role": "Super Admin"},
@@ -17,46 +60,53 @@ if 'users_db' not in st.session_state:
         "partner": {"password": "789", "role": "Partner (View Only)"}
     }
 
-# Global Dropdown Core Arrays (Dynamic Master Lists)
+# Core Dynamic Master Lists Mapping
 if 'menu_items' not in st.session_state:
-    st.session_state.menu_items = ["Kacchi Biryani", "Beef Tehari", "Chicken Biryani", "Borhani", "Water"]
+    st.session_state.menu_items = disk_data.get("menu_items", ["Kacchi Biryani", "Beef Tehari", "Chicken Biryani", "Borhani", "Water"])
 if 'partner_list' not in st.session_state:
-    st.session_state.partner_list = ["Foishal", "Anam", "Habib", "Anayat"]
+    st.session_state.partner_list = disk_data.get("partner_list", ["Foishal", "Anam", "Habib", "Anayat"])
 if 'asset_categories' not in st.session_state:
-    st.session_state.asset_categories = ["Shop Rent", "Startup Assets", "Utility Installation", "Legal/Licenses"]
+    st.session_state.asset_categories = disk_data.get("asset_categories", ["Shop Rent", "Startup Assets", "Utility Installation", "Legal/Licenses"])
 if 'expense_categories' not in st.session_state:
-    st.session_state.expense_categories = ["Electricity Bill", "Gas/Wood Bill", "Waste Management", "Marketing", "Others"]
+    st.session_state.expense_categories = disk_data.get("expense_categories", ["Electricity Bill", "Gas/Wood Bill", "Waste Management", "Marketing", "Others"])
 if 'inventory_items' not in st.session_state:
-    st.session_state.inventory_items = ["Miniket Rice", "Beef Meat", "Polao Rice", "Soyabean Oil", "Onion", "Spices"]
+    st.session_state.inventory_items = disk_data.get("inventory_items", ["Miniket Rice", "Beef Meat", "Polao Rice", "Soyabean Oil", "Onion", "Spices"])
 
-# Fresh Master Transaction Data Tables (Starting with 0 Records)
+# Dynamic Table Data Recovery Blocks
 if 'partners_db' not in st.session_state:
-    st.session_state.partners_db = pd.DataFrame([{"Partner Name": p, "Investment Amount": 0.0} for p in st.session_state.partner_list])
+    p_records = disk_data.get("partners_db", [])
+    if p_records:
+        st.session_state.partners_db = pd.DataFrame(p_records)
+    else:
+        st.session_state.partners_db = pd.DataFrame([{"Partner Name": p, "Investment Amount": 0.0} for p in st.session_state.partner_list])
 
 if 'fixed_expenses' not in st.session_state:
-    st.session_state.fixed_expenses = pd.DataFrame(columns=["Date", "Category", "Asset/Cost Item", "Amount"])
+    st.session_state.fixed_expenses = pd.DataFrame(disk_data.get("fixed_expenses", columns=["Date", "Category", "Asset/Cost Item", "Amount"])) if "fixed_expenses" not in disk_data else pd.DataFrame(disk_data["fixed_expenses"])
 
 if 'monthly_expenses_db' not in st.session_state:
-    st.session_state.monthly_expenses_db = pd.DataFrame(columns=["Date", "Category", "Particulars", "Amount (BDT)"])
+    st.session_state.monthly_expenses_db = pd.DataFrame(disk_data.get("monthly_expenses_db", columns=["Date", "Category", "Particulars", "Amount (BDT)"])) if "monthly_expenses_db" not in disk_data else pd.DataFrame(disk_data["monthly_expenses_db"])
 
 if 'variable_bazar' not in st.session_state:
-    st.session_state.variable_bazar = pd.DataFrame(columns=["Date", "Bazar Item Name", "Quantity/Weight", "Total Cost (BDT)", "Purchased By"])
+    st.session_state.variable_bazar = pd.DataFrame(disk_data.get("variable_bazar", columns=["Date", "Bazar Item Name", "Quantity/Weight", "Total Cost (BDT)", "Purchased By"])) if "variable_bazar" not in disk_data else pd.DataFrame(disk_data["variable_bazar"])
 
 if 'sales_records' not in st.session_state:
-    st.session_state.sales_records = pd.DataFrame(columns=["Date", "Month-Year", "Item Name", "Rate per Plate", "Total Plates", "Adjustment", "Net Total"])
+    st.session_state.sales_records = pd.DataFrame(disk_data.get("sales_records", columns=["Date", "Month-Year", "Item Name", "Rate per Plate", "Total Plates", "Adjustment", "Net Total"])) if "sales_records" not in disk_data else pd.DataFrame(disk_data["sales_records"])
 
 if 'salary_db' not in st.session_state:
-    st.session_state.salary_db = pd.DataFrame(columns=["Date", "Staff Name", "Designation", "Salary Type", "Amount Paid (BDT)"])
+    st.session_state.salary_db = pd.DataFrame(disk_data.get("salary_db", columns=["Date", "Staff Name", "Designation", "Salary Type", "Amount Paid (BDT)"])) if "salary_db" not in disk_data else pd.DataFrame(disk_data["salary_db"])
 
 if 'inventory_db' not in st.session_state:
-    st.session_state.inventory_db = pd.DataFrame([
-        {"Material Name": m, "Current Stock": 0.0, "Unit": "Kg/Ltr", "Alert Level": 10.0} for m in st.session_state.inventory_items
-    ])
+    i_records = disk_data.get("inventory_db", [])
+    if i_records:
+        st.session_state.inventory_db = pd.DataFrame(i_records)
+    else:
+        st.session_state.inventory_db = pd.DataFrame([{"Material Name": m, "Current Stock": 0.0, "Unit": "Kg/Ltr", "Alert Level": 10.0} for m in st.session_state.inventory_items])
 
+# Retain Authentication Login Session on Reload
 if 'logged_in_user' not in st.session_state:
-    st.session_state.logged_in_user = None
+    st.session_state.logged_in_user = disk_data.get("logged_in_user", None)
 if 'user_role' not in st.session_state:
-    st.session_state.user_role = None
+    st.session_state.user_role = disk_data.get("user_role", None)
 
 def get_month_year_str(dt_val):
     return dt_val.strftime("%B %Y")
@@ -76,6 +126,7 @@ if st.session_state.logged_in_user is None:
                 if username in st.session_state.users_db and st.session_state.users_db[username]["password"] == password:
                     st.session_state.logged_in_user = username
                     st.session_state.user_role = st.session_state.users_db[username]["role"]
+                    save_permanent_database() # Save login token session instantly
                     st.rerun()
                 else:
                     st.error("❌ Access Denied: Invalid Authentication Credentials.")
@@ -88,6 +139,7 @@ st.sidebar.write(f"**Access Role:** {st.session_state.user_role}")
 if st.sidebar.button("Logout 🚪"):
     st.session_state.logged_in_user = None
     st.session_state.user_role = None
+    save_permanent_database() # Overwrite files to null login tokens
     st.rerun()
 
 is_admin = st.session_state.user_role in ["Super Admin", "Admin"]
@@ -140,7 +192,9 @@ if choice == "📊 Financial Dashboard":
             if len(df) == 0: return df
             df["Temp-Month"] = pd.to_datetime(df["Date"]).dt.strftime("%B %Y")
             filtered = df[df["Temp-Month"] == selected_month]
-            return filtered.drop(columns=["Temp-Month"])
+            if len(filtered) > 0:
+                return filtered.drop(columns=["Temp-Month"])
+            return pd.DataFrame(columns=df.columns)
             
         df_fixed = filter_by_month(df_fixed)
         df_variable = filter_by_month(df_variable)
@@ -364,6 +418,7 @@ elif choice == "🤝 Partner Capital Engine":
                     df_m = st.session_state.partners_db
                     if p_select in df_m["Partner Name"].values:
                         df_m.loc[df_m["Partner Name"] == p_select, "Investment Amount"] += p_inject
+                        save_permanent_database() # Save to disk
                         st.success(f"Equity balance successfully transformed for partner: {p_select}")
                         st.rerun()
 
@@ -382,6 +437,7 @@ elif choice == "🤝 Partner Capital Engine":
                     if f_desc:
                         new_asset = pd.DataFrame([{"Date": f_date.strftime("%Y-%m-%d"), "Category": f_cat, "Asset/Cost Item": f_desc, "Amount": f_cost}])
                         st.session_state.fixed_expenses = pd.concat([st.session_state.fixed_expenses, new_asset], ignore_index=True)
+                        save_permanent_database() # Save to disk
                         st.success("Fixed Asset transaction successfully wired to central relational model.")
                         st.rerun()
 
@@ -419,7 +475,9 @@ elif choice == "💰 Daily Sales Entry":
                     "Net Total": computed_invoice_net
                 }])
                 st.session_state.sales_records = pd.concat([st.session_state.sales_records, new_s_log], ignore_index=True)
+                save_permanent_database() # Save to disk
                 st.success(f"Journal ledger balance increased by {computed_invoice_net:.2f} BDT for item '{prod_sel}'")
+                st.rerun()
 
 # ----------------------------------------------------------------------------------
 # MODULE 6: DAILY VARIABLE BAZAR COST
@@ -442,6 +500,7 @@ elif choice == "🛒 Variable Bazar Cost":
             if st.form_submit_button("Post Bazar Cost Entry"):
                 new_b_entry = pd.DataFrame([{"Date": mat_date.strftime("%Y-%m-%d"), "Bazar Item Name": mat_select, "Quantity/Weight": mat_qty, "Total Cost (BDT)": mat_cost, "Purchased By": st.session_state.logged_in_user.capitalize()}])
                 st.session_state.variable_bazar = pd.concat([st.session_state.variable_bazar, new_b_entry], ignore_index=True)
+                save_permanent_database() # Save to disk
                 st.success("Bazar variable transaction wired into cash statement arrays.")
                 st.rerun()
 
@@ -463,6 +522,7 @@ elif choice == "💼 Monthly Expenses":
                 if m_memo:
                     new_mo_entry = pd.DataFrame([{"Date": m_date.strftime("%Y-%m-%d"), "Category": m_cat, "Particulars": m_memo, "Amount (BDT)": m_val}])
                     st.session_state.monthly_expenses_db = pd.concat([st.session_state.monthly_expenses_db, new_mo_entry], ignore_index=True)
+                    save_permanent_database() # Save to disk
                     st.success("Monthly operational ledger updated.")
                     st.rerun()
 
@@ -490,6 +550,7 @@ elif choice == "🧑‍🍳 Staff Salary Ledger":
                 if emp_name and emp_desg:
                     new_payroll = pd.DataFrame([{"Date": sal_date.strftime("%Y-%m-%d"), "Staff Name": emp_name, "Designation": emp_desg, "Salary Type": sal_class, "Amount Paid (BDT)": sal_value}])
                     st.session_state.salary_db = pd.concat([st.session_state.salary_db, new_payroll], ignore_index=True)
+                    save_permanent_database() # Save to disk
                     st.success("Human resource payroll disbursement record executed safely.")
                     st.rerun()
 
@@ -516,8 +577,8 @@ elif choice == "📦 Inventory & Restock":
             stock_delta = st.number_input("Inward Supply Volume Stock Intake Metric Addition (+ Quantity)", min_value=0.0, step=5.0, value=0.0)
             if st.form_submit_button("Recompute Target Pipeline Volumetric Balances"):
                 st.session_state.inventory_db.loc[st.session_state.inventory_db["Material Name"] == raw_sel, "Current Stock"] += stock_delta
+                save_permanent_database() # Save to disk
                 st.success(f"Supply capacity parameter expanded for material item node: '{raw_sel}'")
-                st.shape = None
                 st.rerun()
 
 # ----------------------------------------------------------------------------------
@@ -537,6 +598,7 @@ elif choice == "⚙️ Dropdown Control Panel":
             if st.button("Save/Append Food Menu Product"):
                 if new_f_item and new_f_item not in st.session_state.menu_items:
                     st.session_state.menu_items.append(new_f_item)
+                    save_permanent_database()
                     st.success("Product element wired to dynamic lookup matrices.")
                     st.rerun()
         with col_m2:
@@ -548,6 +610,7 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.session_state.menu_items[idx] = mutated_f
                     if len(st.session_state.sales_records) > 0:
                         st.session_state.sales_records.loc[st.session_state.sales_records["Item Name"] == target_f, "Item Name"] = mutated_f
+                    save_permanent_database()
                     st.success("Cascade item renaming script complete.")
                     st.rerun()
 
@@ -561,6 +624,7 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.session_state.partner_list.append(new_p_node)
                     new_r = pd.DataFrame([{"Partner Name": new_p_node, "Investment Amount": 0.0}])
                     st.session_state.partners_db = pd.concat([st.session_state.partners_db, new_r], ignore_index=True)
+                    save_permanent_database()
                     st.success("New structural entity partner tracking registered.")
                     st.rerun()
         with col_p2:
@@ -571,6 +635,7 @@ elif choice == "⚙️ Dropdown Control Panel":
                     idx = st.session_state.partner_list.index(target_p)
                     st.session_state.partner_list[idx] = mutated_p
                     st.session_state.partners_db.loc[st.session_state.partners_db["Partner Name"] == target_p, "Partner Name"] = mutated_p
+                    save_permanent_database()
                     st.success("Identity profile configuration renaming done.")
                     st.rerun()
 
@@ -582,6 +647,7 @@ elif choice == "⚙️ Dropdown Control Panel":
             if st.button("Append Asset Category"):
                 if new_a_node and new_a_node not in st.session_state.asset_categories:
                     st.session_state.asset_categories.append(new_a_node)
+                    save_permanent_database()
                     st.success("Structural hierarchy configuration transformed.")
                     st.rerun()
         with col_a2:
@@ -593,6 +659,7 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.session_state.asset_categories[idx] = mutated_a
                     if len(st.session_state.fixed_expenses) > 0:
                         st.session_state.fixed_expenses.loc[st.session_state.fixed_expenses["Category"] == target_a, "Category"] = mutated_a
+                    save_permanent_database()
                     st.success("Asset ledger categories refactored successfully.")
                     st.rerun()
 
@@ -604,6 +671,7 @@ elif choice == "⚙️ Dropdown Control Panel":
             if st.button("Append Operating Cost Type Head"):
                 if new_e_node and new_e_node not in st.session_state.expense_categories:
                     st.session_state.expense_categories.append(new_e_node)
+                    save_permanent_database()
                     st.success("Expense lookup nodes modified.")
                     st.rerun()
         with col_e2:
@@ -615,6 +683,7 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.session_state.expense_categories[idx] = mutated_e
                     if len(st.session_state.monthly_expenses_db) > 0:
                         st.session_state.monthly_expenses_db.loc[st.session_state.monthly_expenses_db["Category"] == target_e, "Category"] = mutated_e
+                    save_permanent_database()
                     st.success("Operational bill lookup arrays adjusted.")
                     st.rerun()
 
@@ -628,6 +697,7 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.session_state.inventory_items.append(new_i_node)
                     new_inv_r = pd.DataFrame([{"Material Name": new_i_node, "Current Stock": 0.0, "Unit": "Kg/Ltr", "Alert Level": 10.0}])
                     st.session_state.inventory_db = pd.concat([st.session_state.inventory_db, new_inv_r], ignore_index=True)
+                    save_permanent_database()
                     st.success("Asset ledger element linked to pipeline parameters.")
                     st.rerun()
         with col_i2:
@@ -638,6 +708,7 @@ elif choice == "⚙️ Dropdown Control Panel":
                     idx = st.session_state.inventory_items.index(target_i)
                     st.session_state.inventory_items[idx] = mutated_i
                     st.session_state.inventory_db.loc[st.session_state.inventory_db["Material Name"] == target_i, "Material Name"] = mutated_i
+                    save_permanent_database()
                     st.success("Inventory node reference altered securely.")
                     st.rerun()
 
@@ -657,5 +728,6 @@ elif choice == "👥 System User Provisioning":
         if st.form_submit_button("Commit Profile Provisioning"):
             if reg_id and reg_pass:
                 st.session_state.users_db[reg_id] = {"password": reg_pass, "role": reg_role}
+                save_permanent_database()
                 st.success("Application account authorization structure expanded successfully.")
                 st.rerun()
