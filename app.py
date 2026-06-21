@@ -737,16 +737,12 @@ elif choice == "⚙️ Dropdown Control Panel":
                     st.success("Inventory node reference altered securely.")
                     st.rerun()
 
-# ----------------------------------------------------------------------------------
-# MODULE 11: SYSTEM USER PROVISIONING MANAGEMENT (Super Admin Only)
-# ----------------------------------------------------------------------------------
-# ----------------------------------------------------------------------------------
-# MODULE 11: SYSTEM USER PROVISIONING MANAGEMENT (Super Admin Only - FIXED PERSISTENT SAVE)
+# --# ----------------------------------------------------------------------------------
+# MODULE 11: SYSTEM USER PROVISIONING MANAGEMENT (Super Admin Only - COLD SAVE EXPANSION)
 # ----------------------------------------------------------------------------------
 elif choice == "👥 System User Provisioning":
     st.title("👥 Application Identity Access Profiles Matrix Provisioning")
     
-    # Render the current matrix profile map in an interactive dataframe table
     u_df = pd.DataFrame([
         {
             "System Login Identifier Context": k, 
@@ -757,7 +753,6 @@ elif choice == "👥 System User Provisioning":
     ])
     st.dataframe(u_df, use_container_width=True)
     
-    # Interactive single form boundary handling updates and registration pipelines
     with st.form("iam_form", clear_on_submit=True):
         st.markdown("### Provision New Profile / Update Existing Password Matrix")
         reg_id = st.text_input("Account Username / User ID (Case-Insensitive String)").strip().lower()
@@ -768,34 +763,50 @@ elif choice == "👥 System User Provisioning":
             if reg_id and reg_pass:
                 is_updating = reg_id in st.session_state.users_db
                 
-                # Write to the runtime session context memory layer
+                # Update inside session memory
                 st.session_state.users_db[reg_id] = {
                     "password": reg_pass,
                     "role": reg_role
                 }
                 
-                # CRITICAL SYSTEM FIX: Synchronize runtime maps directly into JSON Database Disk
+                # CRITICAL DIRECT FILE OVERWRITE SYSTEM
                 try:
+                    import json
+                    # Read original full data structure first
+                    current_disk_data = {}
                     if os.path.exists(DB_FILE):
                         with open(DB_FILE, "r", encoding="utf-8") as f:
-                            current_disk_data = json.load(f)
-                    else:
-                        current_disk_data = {}
+                            try:
+                                current_disk_data = json.load(f)
+                            except:
+                                current_disk_data = {}
                     
-                    # Merge active state map directly to file allocation matrix structure
+                    # Update or append all components to prevent data drops
+                    current_disk_data["menu_items"] = st.session_state.menu_items
+                    current_disk_data["partner_list"] = st.session_state.partner_list
+                    current_disk_data["asset_categories"] = st.session_state.asset_categories
+                    current_disk_data["expense_categories"] = st.session_state.expense_categories
+                    current_disk_data["inventory_items"] = st.session_state.inventory_items
+                    
+                    current_disk_data["partners_db"] = st.session_state.partners_db.to_dict(orient="records") if isinstance(st.session_state.partners_db, pd.DataFrame) else []
+                    current_disk_data["fixed_expenses"] = st.session_state.fixed_expenses.to_dict(orient="records") if isinstance(st.session_state.fixed_expenses, pd.DataFrame) else []
+                    current_disk_data["monthly_expenses_db"] = st.session_state.monthly_expenses_db.to_dict(orient="records") if isinstance(st.session_state.monthly_expenses_db, pd.DataFrame) else []
+                    current_disk_data["variable_bazar"] = st.session_state.variable_bazar.to_dict(orient="records") if isinstance(st.session_state.variable_bazar, pd.DataFrame) else []
+                    current_disk_data["sales_records"] = st.session_state.sales_records.to_dict(orient="records") if isinstance(st.session_state.sales_records, pd.DataFrame) else []
+                    current_disk_data["salary_db"] = st.session_state.salary_db.to_dict(orient="records") if isinstance(st.session_state.salary_db, pd.DataFrame) else []
+                    current_disk_data["inventory_db"] = st.session_state.inventory_db.to_dict(orient="records") if isinstance(st.session_state.inventory_db, pd.DataFrame) else []
+                    
+                    # Store critical identities
                     current_disk_data["users_db"] = st.session_state.users_db
+                    current_disk_data["logged_in_user"] = st.session_state.logged_in_user
+                    current_disk_data["user_role"] = st.session_state.user_role
                     
-                    # Commit and serialize straight to hard-drive cluster stream file
                     with open(DB_FILE, "w", encoding="utf-8") as f:
                         json.dump(current_disk_data, f, indent=4, ensure_ascii=False)
                         
-                    if is_updating:
-                        st.success(f"Success! Credentials for user account '{reg_id}' have been securely overwritten and committed to disk. 💾")
-                    else:
-                        st.success(f"Success! New profile configuration for '{reg_id}' has been generated and wired permanently to disk. 💾")
-                    
+                    st.success(f"Success! System credentials array updated permanently on disk. Memory flushed.")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Critical Error: Failed to write credentials array configuration to file stream. Trace: {e}")
+                    st.error(f"Sync Failure Trace: {e}")
             else:
-                st.error("Validation Error: Profile Identity Context rows and Auth Tokens cannot stay null.")
+                st.error("Validation Error: Blank entries are blocked.")
