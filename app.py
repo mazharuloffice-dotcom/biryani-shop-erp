@@ -72,9 +72,7 @@ if 'expense_categories' not in st.session_state:
 if 'inventory_items' not in st.session_state:
     st.session_state.inventory_items = disk_data.get("inventory_items", ["Miniket Rice", "Beef Meat", "Polao Rice", "Soyabean Oil", "Onion", "Spices"])
 
-# ----------------------------------------------------------------------------------
-# CRITICAL FIX: Safe DataFrame recovery blocks from JSON Disk Storage
-# ----------------------------------------------------------------------------------
+# Safe DataFrame recovery blocks from JSON Disk Storage
 if 'partners_db' not in st.session_state:
     p_records = disk_data.get("partners_db", [])
     if p_records:
@@ -276,45 +274,3 @@ if choice == "📊 Financial Dashboard":
             "Net Resultant Operational Balance (P&L profit base)"
         ],
         "Calculated Statement Values (BDT)": [f"{m_sales:,.2f}", f"{m_fixed:,.2f}", f"{m_variable:,.2f}", f"{m_monthly:,.2f}", f"{m_salary:,.2f}", f"{m_net_profit_loss:,.2f}"]
-    }
-    st.table(pd.DataFrame(pl_data))
-
-    st.markdown("---")
-    st.markdown(f"### 🤝 Automated Month-Wise Profit Sharing Engine ({selected_month})")
-    df_payout = st.session_state.partners_db.copy()
-    if total_capital_base > 0:
-        df_payout["Capital Ownership Share (%)"] = (df_payout["Investment Amount"] / total_capital_base) * 100
-        df_payout["Calculated Month P&L Share (BDT)"] = (df_payout["Capital Ownership Share (%)"] / 100) * m_net_profit_loss
-        
-        df_p_disp = df_payout.copy()
-        df_p_disp["Investment Amount"] = df_p_disp["Investment Amount"].map("{:,.2f} BDT".format)
-        df_p_disp["Capital Ownership Share (%)"] = df_p_disp["Capital Ownership Share (%)"].map("{:.2f}%".format)
-        df_p_disp["Calculated Month P&L Share (BDT)"] = df_p_disp["Calculated Month P&L Share (BDT)"].map("{:,.2f} BDT".format)
-        st.dataframe(df_p_disp, use_container_width=True)
-    else:
-        st.info("Equity database amounts stand at 0. Enter partner capital to run distribution matrix scripts.")
-
-# ----------------------------------------------------------------------------------
-# MODULE 2: ADVANCED REPORT MANAGER
-# ----------------------------------------------------------------------------------
-elif choice == "📈 Advanced Report Manager":
-    st.title("📈 Strategic Cross-Module Multi-Report Manager Engine")
-    
-    rep_tab1, rep_tab2, rep_tab3 = st.tabs(["Sales Journal Ledger", "Variable Material Sourcing", "Staff Payroll Distributions"])
-    
-    with rep_tab1:
-        st.markdown("### 🔍 Sales Ledger Filtering Filter")
-        sc1, sc2 = st.columns(2)
-        with sc1:
-            s_start = st.date_input("Sales Tracking From Date", date(2026, 1, 1), key="rep_s_start")
-        with sc2:
-            s_end = st.date_input("Sales Tracking To Date", datetime.now().date(), key="rep_s_end")
-            
-        if len(st.session_state.sales_records) > 0:
-            df_s_master = st.session_state.sales_records.copy()
-            df_s_master["Date"] = pd.to_datetime(df_s_master["Date"]).dt.date
-            f_sales = df_s_master[(df_s_master["Date"] >= s_start) & (df_s_master["Date"] <= s_end)]
-            
-            st.metric("Aggregated Net Filtered Sales Volume", f"{f_sales['Net Total'].sum():,.2f} BDT")
-            st.dataframe(f_sales, use_container_width=True)
-            st.download_button(label="📥 Export Sales Data as Excel (CSV)", data=f_
