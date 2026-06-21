@@ -740,19 +740,62 @@ elif choice == "⚙️ Dropdown Control Panel":
 # ----------------------------------------------------------------------------------
 # MODULE 11: SYSTEM USER PROVISIONING MANAGEMENT (Super Admin Only)
 # ----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
+# MODULE 11: SYSTEM USER PROVISIONING MANAGEMENT (Super Admin Only - FIXED PERSISTENT SAVE)
+# ----------------------------------------------------------------------------------
 elif choice == "👥 System User Provisioning":
     st.title("👥 Application Identity Access Profiles Matrix Provisioning")
-    u_df = pd.DataFrame([{"System Login Identifier Context": k, "Privilege Access Group Matrix": v["role"], "Password Auth Token Block": v["password"]} for k, v in st.session_state.users_db.items()])
+    
+    # Render the current matrix profile map in an interactive dataframe table
+    u_df = pd.DataFrame([
+        {
+            "System Login Identifier Context": k, 
+            "Privilege Access Group Matrix": v["role"], 
+            "Password Auth Token Block": v["password"]
+        } 
+        for k, v in st.session_state.users_db.items()
+    ])
     st.dataframe(u_df, use_container_width=True)
     
-    with st.form("iam_form"):
-        st.markdown("### Provision New Dynamic Profile Identifier Access Connection Entry")
-        reg_id = st.text_input("Desired Unique Account Identifier User ID").strip().lower()
-        reg_pass = st.text_input("Auth Token Key Password Pass String Value", type="password")
+    # Interactive single form boundary handling updates and registration pipelines
+    with st.form("iam_form", clear_on_submit=True):
+        st.markdown("### Provision New Profile / Update Existing Password Matrix")
+        reg_id = st.text_input("Account Username / User ID (Case-Insensitive String)").strip().lower()
+        reg_pass = st.text_input("Auth Token Key Password (New Registration / Overwrite Update)", type="password")
         reg_role = st.selectbox("Access Group Privileges Assignment", ["Super Admin", "Admin", "Partner (View Only)"])
-        if st.form_submit_button("Commit Profile Provisioning"):
+        
+        if st.form_submit_button("Commit Profile / Update Password Token ✅"):
             if reg_id and reg_pass:
-                st.session_state.users_db[reg_id] = {"password": reg_pass, "role": reg_role}
-                save_permanent_database()
-                st.success("Application account authorization structure expanded successfully.")
-                st.rerun()
+                is_updating = reg_id in st.session_state.users_db
+                
+                # Write to the runtime session context memory layer
+                st.session_state.users_db[reg_id] = {
+                    "password": reg_pass,
+                    "role": reg_role
+                }
+                
+                # CRITICAL SYSTEM FIX: Synchronize runtime maps directly into JSON Database Disk
+                try:
+                    if os.path.exists(DB_FILE):
+                        with open(DB_FILE, "r", encoding="utf-8") as f:
+                            current_disk_data = json.load(f)
+                    else:
+                        current_disk_data = {}
+                    
+                    # Merge active state map directly to file allocation matrix structure
+                    current_disk_data["users_db"] = st.session_state.users_db
+                    
+                    # Commit and serialize straight to hard-drive cluster stream file
+                    with open(DB_FILE, "w", encoding="utf-8") as f:
+                        json.dump(current_disk_data, f, indent=4, ensure_ascii=False)
+                        
+                    if is_updating:
+                        st.success(f"Success! Credentials for user account '{reg_id}' have been securely overwritten and committed to disk. 💾")
+                    else:
+                        st.success(f"Success! New profile configuration for '{reg_id}' has been generated and wired permanently to disk. 💾")
+                    
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Critical Error: Failed to write credentials array configuration to file stream. Trace: {e}")
+            else:
+                st.error("Validation Error: Profile Identity Context rows and Auth Tokens cannot stay null.")
