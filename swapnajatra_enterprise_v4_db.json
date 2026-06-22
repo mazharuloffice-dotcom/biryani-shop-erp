@@ -1,0 +1,143 @@
+{
+    "users": {
+        "superadmin": {
+            "password": "MiB@#32!",
+            "role": "Super Admin"
+        },
+        "manager": {
+            "password": "MngrBari789",
+            "role": "Manager"
+        },
+        "partner": {
+            "password": "PrtnrPool456",
+            "role": "Partner"
+        }
+    },
+    "privileges": {
+        "Super Admin": [
+            "🏠 Main Dashboard",
+            "👨‍💼 Employee Register",
+            "📅 Attendance System",
+            "📝 Leave Management",
+            "🧾 Digital Invoice Generator",
+            "🤝 Partner Capital Engine",
+            "💰 Daily Sales Entry",
+            "🛒 Variable Bazar Cost",
+            "💼 Monthly Expenses",
+            "🧑‍🍳 Staff Salary Ledger",
+            "📦 Inventory & Restock",
+            "⚙️ Dropdown Control Panel",
+            "🛡️ System User Provisioning",
+            "👁️ Partner Preview Mode",
+            "⚙️ Account Options"
+        ],
+        "Manager": [
+            "🏠 Main Dashboard",
+            "📅 Attendance System",
+            "📝 Leave Management",
+            "🧾 Digital Invoice Generator",
+            "💰 Daily Sales Entry",
+            "🛒 Variable Bazar Cost",
+            "📦 Inventory & Restock"
+        ],
+        "Partner": [
+            "👁️ Partner Preview Mode"
+        ]
+    },
+    "dropdowns": {
+        "shifts": [
+            "Day Shift",
+            "Night Shift"
+        ],
+        "dishes": [
+            "Kacchi Biryani",
+            "Beef Tehari",
+            "Chicken Biryani",
+            "Borhani",
+            "Water"
+        ],
+        "suppliers": [
+            "Mayer Doa Rice Agency",
+            "Dhaka Meat House",
+            "Karwan Bazar Traders"
+        ],
+        "expense_categories": [
+            "Shop Rent",
+            "Electricity Bill",
+            "Gas Bill",
+            "Water Bill",
+            "Internet",
+            "Cleaning",
+            "Marketing"
+        ],
+        "departments": [
+            "Kitchen Crew",
+            "Front Desk Management",
+            "Delivery Operations",
+            "Accounts & Audit"
+        ],
+        "designations": [
+            "Head Chef",
+            "Assistant Chef",
+            "Cashier",
+            "Store Keeper",
+            "Senior Server"
+        ],
+        "employment_status": [
+            "Permanent",
+            "Probationary",
+            "Part-Time"
+        ]
+    },
+    "partners": {
+        "Foishal": {
+            "capital": 165000.0,
+            "profit_pct": 40.0
+        },
+        "Anam": {
+            "capital": 300000.0,
+            "profit_pct": 25.0
+        },
+        "Habib": {
+            "capital": 200000.0,
+            "profit_pct": 17.5
+        },
+        "Anayat": {
+            "capital": 200000.0,
+            "profit_pct": 17.5
+        }
+    },
+    "employees": {},
+    "attendance": [],
+    "leaves": [],
+    "sales": [],
+    "bazar": [],
+    "expenses": [],
+    "payroll": [],
+    "inventory": [
+        {
+            "ID": 101,
+            "Material Name": "Miniket Rice",
+            "Category": "Rice",
+            "Stock": 250.0,
+            "Unit": "Kg",
+            "Min Alert": 50.0
+        },
+        {
+            "ID": 102,
+            "Material Name": "Beef Meat",
+            "Category": "Meat",
+            "Stock": 120.0,
+            "Unit": "Kg",
+            "Min Alert": 30.0
+        },
+        {
+            "ID": 103,
+            "Material Name": "Polao Rice",
+            "Category": "Rice",
+            "Stock": 180.0,
+            "Unit": "Kg",
+            "Min Alert": 40.0
+        }
+    ]
+}

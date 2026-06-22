@@ -1,0 +1,79 @@
+{
+    "partners_records": {
+        "P-001": {
+            "name": "Foishal",
+            "contact": "01711111111",
+            "nid": "8234567890",
+            "capital": 700000.0,
+            "date": "2026-01-10"
+        },
+        "P-002": {
+            "name": "Anam",
+            "contact": "01722222222",
+            "nid": "8234567891",
+            "capital": 300000.0,
+            "date": "2026-01-12"
+        },
+        "P-003": {
+            "name": "Habib",
+            "contact": "01733333333",
+            "nid": "8234567892",
+            "capital": 200000.0,
+            "date": "2026-01-15"
+        },
+        "P-004": {
+            "name": "Anayat",
+            "contact": "01744444444",
+            "nid": "8234567893",
+            "capital": 200000.0,
+            "date": "2026-01-20"
+        }
+    },
+    "sales_ledger": [],
+    "bazar_ledger": [],
+    "monthly_expenses": [],
+    "payroll_ledger": [],
+    "employee_profiles": {},
+    "master_menu": [
+        "Kacchi Biryani",
+        "Beef Tehari",
+        "Chicken Biryani",
+        "Borhani",
+        "Water"
+    ],
+    "master_suppliers": [
+        "Mayer Doa Rice Agency",
+        "Dhaka Meat House",
+        "Karwan Bazar Traders"
+    ],
+    "inventory_master": [
+        {
+            "Material Name": "Miniket Rice",
+            "Category": "Rice",
+            "Stock": 250.0,
+            "Unit": "Kg",
+            "Min Alert": 50.0
+        },
+        {
+            "Material Name": "Beef Meat",
+            "Category": "Meat",
+            "Stock": 120.0,
+            "Unit": "Kg",
+            "Min Alert": 30.0
+        },
+        {
+            "Material Name": "Polao Rice",
+            "Category": "Rice",
+            "Stock": 180.0,
+            "Unit": "Kg",
+            "Min Alert": 40.0
+        },
+        {
+            "Material Name": "Soyabean Oil",
+            "Category": "Oil",
+            "Stock": 90.0,
+            "Unit": "Ltr",
+            "Min Alert": 20.0
+        }
+    ]
+}
